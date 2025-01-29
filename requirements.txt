@@ -1,0 +1,5 @@
+folium
+contextily
+geopandas
+mapclassify
+pysal
