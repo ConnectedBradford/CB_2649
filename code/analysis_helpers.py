@@ -65,7 +65,7 @@ def add_calculated_columns(
     df[dob_col] = df[dob_col].dt.tz_localize(None)
 
     # Calculate age at entry (in years)
-    df['AgeAtEntry'] = ((df[start_date_col] - df[dob_col]).dt.days / 365.25).astype('float')
+    df['AgeAtEntry'] = ((df[start_date_col] - df[dob_col]).dt.days / 365.25).astype('int')
 
     # Calculate duration in intervention
     df['num_of_days_in_intervention'] = (df[end_date_col] - df[start_date_col]).dt.days
@@ -159,13 +159,6 @@ def plot_age_distribution(
     ax2.set_ylabel("Frequency")
     ax2.set_xlabel("Age Group")
     ax2.tick_params(axis='x', rotation=45)
-
-    # Highlight the highest frequency bin in a different color
-    max_group = age_group_counts.idxmax()
-    for patch in ax2.patches:
-        if patch.get_x() <= max_group.index and patch.get_x() + patch.get_width() > max_group.index:
-            patch.set_color(color)
-
     plt.tight_layout()
     plt.show()
 
@@ -395,4 +388,243 @@ def plot_average_duration_by_age(dataframe, intervention_name, color=color):
     plt.ylabel(f'Average Duration in {intervention_name} (days)', fontsize=12)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
+    plt.show()
+    
+def plot_median_duration_by_age(dataframe, intervention_name, color=color):
+    """
+    Plots the median duration of intervention by age groups.
+
+    Parameters:
+    - dataframe: DataFrame containing the calculated columns (num_of_days_in_intervention, entry_agegroup)
+    - intervention_name: Name of the intervention for plot titles
+    - color: Color for the plot
+    """
+    # Calculate medians and confidence intervals for each age group
+    medians = dataframe.groupby('entry_agegroup')['num_of_days_in_intervention'].median().reset_index()
+
+    plt.figure(figsize=(10, 6))
+
+    # Create the plot
+    plt.plot(medians.index, medians['num_of_days_in_intervention'],
+            'o-', color=color, markersize=8)
+
+    # Add error bars using quantiles if desired
+    q25 = dataframe.groupby('entry_agegroup')['num_of_days_in_intervention'].quantile(0.25)
+    q75 = dataframe.groupby('entry_agegroup')['num_of_days_in_intervention'].quantile(0.75)
+    plt.fill_between(medians.index,
+                     q25,
+                     q75,
+                     alpha=0.2,
+                     color=color)
+
+    # Customize the plot
+    plt.title(f'Median Duration in {intervention_name} by Entry Age Group',
+             fontsize=14,
+             pad=20)
+    plt.xlabel('Entry Age Group', fontsize=12)
+    plt.ylabel(f'Median Duration in {intervention_name} (days)', fontsize=12)
+    plt.grid(True, alpha=0.3)
+
+    # Set x-ticks to age group labels
+    plt.xticks(medians.index, medians['entry_agegroup'])
+
+    # Add median values on top of each point
+    for idx, median in enumerate(medians['num_of_days_in_intervention']):
+        plt.text(idx, median, f'{median:.0f}',
+                ha='center', va='bottom')
+
+    plt.tight_layout()
+    plt.savefig(f'../figs/{intervention_name}_median_duration_by_age.png',
+                dpi=300, bbox_inches='tight', facecolor='white')
+    plt.show()
+    
+def plot_age_groups_for_children_still_in_care(dataframe, intervention_name,
+                                               end_date_col,
+                                               age_group_col,
+                                               color=color):
+    """
+    Plots the distribution of the specified age group column for children who
+    are still in care (i.e., those with a missing end date).
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        The input DataFrame containing the relevant columns.
+    end_date_col : str, optional
+        The column name indicating end date of intervention (default: "EndDate").
+    age_group_col : str, optional
+        The column name indicating the categorized age group (default: "entry_agegroup").
+    color : str, optional
+        Bar color for the histogram (default: "#702A7D").
+    intervention_name : str, optional
+        Name of the intervention, used for plot titles (default: "LAC").
+    """
+    still_in_care = dataframe.loc[dataframe[end_date_col].isnull()]
+
+    plt.figure(figsize=(7,5))
+    sns.histplot(data=still_in_care, x=age_group_col, color=color)
+    plt.title(f'Age Group Distribution for Children Still in {intervention_name}', fontsize=10)
+    plt.xlabel('Age Group')
+    plt.ylabel('Count')
+    plt.grid(False)
+    plt.tight_layout()
+    plt.savefig(f"../figs/{intervention_name}_agedist_still_in_care.png", dpi=300, bbox_inches='tight')
+    plt.show()
+    
+def plot_median_intervention_duration_over_time(dataframe, intervention_name, end_date_col,
+                                                duration_col,
+                                                time_freq='Y',
+                                                color=color):
+    """
+    Plots the median intervention duration over time (resampled by the specified frequency).
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        The input DataFrame containing the relevant columns.
+    end_date_col : str, optional
+        The column name indicating end date of intervention (default: "EndDate").
+    duration_col : str, optional
+        The column name that stores the duration of intervention in days (default: "num_of_days_in_intervention").
+    time_freq : str, optional
+        The frequency for resampling (default: 'Y' for yearly). Common options include
+        'M' (monthly), 'Q' (quarterly), etc.
+    color : str, optional
+        Line color for the plot (default: "#702A7D").
+    intervention_name : str, optional
+        Name of the intervention, used for plot titles (default: "LAC").
+    """
+
+    # Resample by given frequency and compute median
+    time_series = (dataframe.set_index(end_date_col)[duration_col]
+                              .resample(time_freq)
+                              .median())
+    plt.figure(figsize=(8,4))
+    time_series.plot(color=color)
+
+    plt.title(f'Median Intervention Duration Over Time ({intervention_name})')
+    plt.xlabel('Date')
+    plt.ylabel('Median Duration (days)')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(f"../figs/{intervention_name}_median_duration_over_time.png", dpi=300, bbox_inches='tight')
+    plt.show()
+    
+def plot_top_n_category_distribution(dataframe, intervention_name,
+                                     category_col, n=10,
+                                     color=color):
+    """
+    Plots the distribution of the top N categories in the specified column.
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        The input DataFrame containing the relevant columns.
+    category_col : str
+        The name of the column that specifies categories (e.g., 'CPP_Category', 'Category').
+    n : int, optional
+        Number of most frequent categories to display (default: 10).
+    color : str, optional
+        Bar color for the plot (default: "#702A7D").
+    intervention_name : str, optional
+        Name of the intervention, used for plot titles (default: "LAC").
+    """
+    # Identify the top N categories
+    top_categories = dataframe[category_col].value_counts().nlargest(n).index
+    # Filter the DataFrame to include only top N categories
+    filtered_df = dataframe[dataframe[category_col].isin(top_categories)]
+
+    plt.figure(figsize=(8,5))
+    ax = sns.countplot(data=filtered_df, y=category_col, order=top_categories, color=color)
+    ax.set_title(f'Top {n} {category_col} Distribution ({intervention_name})')
+    ax.set_ylabel('Category')
+    ax.set_xlabel('Count')
+    
+    # Remove the x-axis labels
+    plt.gca().set_xticklabels([])
+
+    # add count labels
+    for container in ax.containers:
+        ax.bar_label(container, fmt='%d')
+
+    plt.tight_layout()
+    plt.savefig(f"../figs/{intervention_name}_top_{n}_category_distribution.png", dpi=300, bbox_inches='tight')
+    plt.show()
+    
+def plot_agegroup_distribution_top_categories(
+    dataframe,
+    intervention_name,
+    category_col='Category',
+    agegroup_col='entry_agegroup',
+    n=5):
+    """
+    Plots a bar chart of agegroup percentages, with the top N categories.
+    Each age group's categories sum to 100%.
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        The DataFrame containing the data.
+    category_col : str, optional
+        The column name for the category grouping.
+    agegroup_col : str, optional
+        The column name for the pre-assigned age groups (default 'entry_agegroup').
+    n : int, optional
+        Number of top categories to display (default 5).
+    color_palette : str or list, optional
+        A Matplotlib/Seaborn color palette or list of colors for the bars
+        (default 'Purples').
+    """
+    # create pivot table with ALL categories
+    full_pivot = dataframe.groupby([agegroup_col, category_col]).size().unstack(fill_value=0)
+
+    #  Calculate percentages based on ALL categories
+    full_pivot_pct = full_pivot.div(full_pivot.sum(axis=1), axis=0) * 100
+
+    #  Identify top N categories
+    top_categories = dataframe[category_col].value_counts().head(n).index
+
+    # Filter to show only top N categories
+    pivot_df_pct = full_pivot_pct[top_categories]
+
+    #  Round percentages to 1 decimal place
+    pivot_df_pct = pivot_df_pct.round(1)
+
+    #  Add % symbol to all values
+    formatted_df = pivot_df_pct.applymap(lambda x: f"{x}%")
+
+    # If age group is categorical and has a known order, reindex rows to preserve that order
+    if hasattr(dataframe[agegroup_col], 'cat') and dataframe[agegroup_col].cat.categories is not None:
+        formatted_df = formatted_df.reindex(dataframe[agegroup_col].cat.categories, axis=0)
+
+    # Create color map with evenly spaced colors
+    colors = plt.cm.Purples_r(np.linspace(0.3, 0.9, len(top_categories)))  # Added this line
+
+    # Plot it as a bar chart
+    ax = pivot_df_pct.plot(
+        kind='bar',
+        stacked=False,
+        figsize=(10, 6),
+        color=colors,  # Use our custom colors
+        edgecolor='none',
+        width=0.8
+    )
+
+    # Aesthetic adjustments
+    plt.title(f'Category Distribution by Age Group (Top {n} {category_col}s)', fontsize=14, pad=15)
+    plt.xlabel('Age Group', fontsize=12)
+    plt.ylabel('Percentage (%)', fontsize=12)
+
+    # Add percentage signs to y-axis
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0f}%'.format(y)))
+
+    # Place legend to the right
+    plt.legend(title=category_col, bbox_to_anchor=(1.01, 1), loc='upper left')
+
+    # Add grid lines for better readability of percentages
+    plt.grid(axis='y', linestyle='--', alpha=0.5)
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    plt.savefig(f"../figs/{intervention_name}_agegroup_by_category_percent.png",
+                dpi=300, bbox_inches="tight", facecolor="white")
     plt.show()
