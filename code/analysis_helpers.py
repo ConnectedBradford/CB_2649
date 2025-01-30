@@ -611,7 +611,7 @@ def plot_agegroup_distribution_top_categories(
     )
 
     # Aesthetic adjustments
-    plt.title(f'Category Distribution by Age Group (Top {n} {category_col}s)', fontsize=14, pad=15)
+    plt.title(f'Category Distribution by Age Group (Top {n} {category_col})', fontsize=14, pad=15)
     plt.xlabel('Age Group', fontsize=12)
     plt.ylabel('Percentage (%)', fontsize=12)
 
