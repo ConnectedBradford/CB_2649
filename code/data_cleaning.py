@@ -55,3 +55,31 @@ def drop_duplicates(dataframe):
     - pd.DataFrame: The dataframe with duplicates removed
     """
     dataframe.drop_duplicates(inplace=True)
+    
+    
+
+def gender_mapping(df, gender_column):
+    """
+    
+    Cleans the gender column by mapping values to the correct gender
+    
+    Returns:
+    - pd.DataFrame: The dataframe with cleaned gender column
+    """
+    # Create a mapping dictionary to clean the gender column
+    gender_mapping = {
+        'F': 'Female',
+        'M': 'Male',
+        '1': 'Female',
+        '2': 'Male',
+        'Male': 'Male',
+        'Female': 'Female',
+        'U': None,
+        'N': None,  
+        'null': None,
+        None: None
+    }
+    
+    # clean the gender column
+    df[gender_column] = df[gender_column].map(gender_mapping)
+    return df[gender_column].unique()

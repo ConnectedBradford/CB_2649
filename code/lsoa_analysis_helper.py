@@ -165,6 +165,11 @@ def plot_cumulative_distribution(
         Figure size in inches
     base_output_path : str, default="../figs"
         Base path for saving the figure
+
+    Returns:
+    --------
+    float
+        Percentage of LSOAs that account for 50% of cases
     """
     # Calculate total cases
     total_cases = data[count_column].sum()
@@ -177,6 +182,10 @@ def plot_cumulative_distribution(
     sorted_data['cumulative_percent'] = (
         100.0 * sorted_data['cumulative_cases'] / total_cases
     )
+
+    # Calculate percentage of LSOAs accounting for 50% of cases
+    lsoas_for_50_percent = len(sorted_data[sorted_data['cumulative_percent'] <= 50])
+    percent_lsoas_for_50 = (lsoas_for_50_percent / len(sorted_data)) * 100
 
     # Create x-axis representing percentage of LSOAs
     num_lsoas = len(sorted_data)
@@ -199,6 +208,8 @@ def plot_cumulative_distribution(
     output_path = f"{base_output_path}/{intervention_name.lower()}_cumulative_distribution.png"
     plt.savefig(output_path, dpi=300)
     plt.show()
+
+    return f"{percent_lsoas_for_50:.1f}% of LSOAs account for 50% of {intervention_name} cases"
     
 
 
