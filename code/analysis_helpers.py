@@ -85,12 +85,27 @@ def add_calculated_columns(
 
 def plot_distributions(dataframe, color=color):
     """
-    Creates distribution plots for Ethnicity and PCArea.
+    Creates distribution plots for Gender, Ethnicity and PCArea.
 
     Parameters:
     - dataframe: pd.DataFrame, the dataframe containing the data
     - color: str, optional, color for the plots (default is #702A7D)
     """
+    # Gender Distribution
+    plt.figure(figsize=(6,6))
+    ax = sns.countplot(data=dataframe, 
+                       x='Gender',
+                       color=color)
+    ax.set_title('Gender Distribution')
+    ax.set_xlabel('Gender')
+
+    # Add counts to the bar
+    for container in ax.containers:
+        ax.bar_label(container, fmt='%d')
+
+    plt.tight_layout()
+    plt.show()
+    
     # Ethnicity Distribution
     plt.figure(figsize=(8, 10))
     ax = sns.countplot(
@@ -510,121 +525,3 @@ def plot_median_intervention_duration_over_time(dataframe, intervention_name, en
     plt.savefig(f"../figs/{intervention_name}_median_duration_over_time.png", dpi=300, bbox_inches='tight')
     plt.show()
     
-def plot_top_n_category_distribution(dataframe, intervention_name,
-                                     category_col, n=10,
-                                     color=color):
-    """
-    Plots the distribution of the top N categories in the specified column.
-
-    Parameters
-    ----------
-    dataframe : pd.DataFrame
-        The input DataFrame containing the relevant columns.
-    category_col : str
-        The name of the column that specifies categories (e.g., 'CPP_Category', 'Category').
-    n : int, optional
-        Number of most frequent categories to display (default: 10).
-    color : str, optional
-        Bar color for the plot (default: "#702A7D").
-    intervention_name : str, optional
-        Name of the intervention, used for plot titles (default: "LAC").
-    """
-    # Identify the top N categories
-    top_categories = dataframe[category_col].value_counts().nlargest(n).index
-    # Filter the DataFrame to include only top N categories
-    filtered_df = dataframe[dataframe[category_col].isin(top_categories)]
-
-    plt.figure(figsize=(8,5))
-    ax = sns.countplot(data=filtered_df, y=category_col, order=top_categories, color=color)
-    ax.set_title(f'Top {n} {category_col} Distribution ({intervention_name})')
-    ax.set_ylabel('Category')
-    ax.set_xlabel('Count')
-    
-    # Remove the x-axis labels
-    plt.gca().set_xticklabels([])
-
-    # add count labels
-    for container in ax.containers:
-        ax.bar_label(container, fmt='%d')
-
-    plt.tight_layout()
-    plt.savefig(f"../figs/{intervention_name}_top_{n}_category_distribution.png", dpi=300, bbox_inches='tight')
-    plt.show()
-    
-def plot_agegroup_distribution_top_categories(
-    dataframe,
-    intervention_name,
-    category_col='Category',
-    agegroup_col='entry_agegroup',
-    n=5):
-    """
-    Plots a bar chart of agegroup percentages, with the top N categories.
-    Each age group's categories sum to 100%.
-
-    Parameters
-    ----------
-    dataframe : pd.DataFrame
-        The DataFrame containing the data.
-    category_col : str, optional
-        The column name for the category grouping.
-    agegroup_col : str, optional
-        The column name for the pre-assigned age groups (default 'entry_agegroup').
-    n : int, optional
-        Number of top categories to display (default 5).
-    color_palette : str or list, optional
-        A Matplotlib/Seaborn color palette or list of colors for the bars
-        (default 'Purples').
-    """
-    # create pivot table with ALL categories
-    full_pivot = dataframe.groupby([agegroup_col, category_col]).size().unstack(fill_value=0)
-
-    #  Calculate percentages based on ALL categories
-    full_pivot_pct = full_pivot.div(full_pivot.sum(axis=1), axis=0) * 100
-
-    #  Identify top N categories
-    top_categories = dataframe[category_col].value_counts().head(n).index
-
-    # Filter to show only top N categories
-    pivot_df_pct = full_pivot_pct[top_categories]
-
-    #  Round percentages to 1 decimal place
-    pivot_df_pct = pivot_df_pct.round(1)
-
-    #  Add % symbol to all values
-    formatted_df = pivot_df_pct.applymap(lambda x: f"{x}%")
-
-    # If age group is categorical and has a known order, reindex rows to preserve that order
-    if hasattr(dataframe[agegroup_col], 'cat') and dataframe[agegroup_col].cat.categories is not None:
-        formatted_df = formatted_df.reindex(dataframe[agegroup_col].cat.categories, axis=0)
-
-    # Create color map with evenly spaced colors
-    colors = plt.cm.Purples_r(np.linspace(0.3, 0.9, len(top_categories)))  # Added this line
-
-    # Plot it as a bar chart
-    ax = pivot_df_pct.plot(
-        kind='bar',
-        stacked=False,
-        figsize=(10, 6),
-        color=colors,  # Use our custom colors
-        edgecolor='none',
-        width=0.8
-    )
-
-    # Aesthetic adjustments
-    plt.title(f'Category Distribution by Age Group (Top {n} {category_col})', fontsize=14, pad=15)
-    plt.xlabel('Age Group', fontsize=12)
-    plt.ylabel('Percentage (%)', fontsize=12)
-
-    # Add percentage signs to y-axis
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0f}%'.format(y)))
-
-    # Place legend to the right
-    plt.legend(title=category_col, bbox_to_anchor=(1.01, 1), loc='upper left')
-
-    # Add grid lines for better readability of percentages
-    plt.grid(axis='y', linestyle='--', alpha=0.5)
-    plt.xticks(rotation=0)
-    plt.tight_layout()
-    plt.savefig(f"../figs/{intervention_name}_agegroup_by_category_percent.png",
-                dpi=300, bbox_inches="tight", facecolor="white")
-    plt.show()
