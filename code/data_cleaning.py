@@ -76,8 +76,7 @@ def gender_mapping(df, gender_column):
         'Female': 'Female',
         'U': None,
         'N': None,  
-        'null': None,
-        None: None
+        'null': None
     }
     
     # clean the gender column

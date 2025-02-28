@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from dateutil.relativedelta import relativedelta
 
 # Project color definitions:
 color = '#702A7D'
@@ -65,7 +66,9 @@ def add_calculated_columns(
     df[dob_col] = df[dob_col].dt.tz_localize(None)
 
     # Calculate age at entry (in years)
-    df['AgeAtEntry'] = ((df[start_date_col] - df[dob_col]).dt.days / 365.25).astype('int')
+    df['AgeAtEntry'] = df.apply(
+    lambda row: relativedelta(row[start_date_col], row[dob_col]).years,
+    axis=1).astype('int')
 
     # Calculate duration in intervention
     df['num_of_days_in_intervention'] = (df[end_date_col] - df[start_date_col]).dt.days
@@ -162,7 +165,7 @@ def plot_age_distribution(
 
     # 1. Continuous age distribution
     age_at_entry = (dataframe[startdate].dt.year - dataframe[birth_date_column].dt.year).astype(int)
-    sns.histplot(age_at_entry, color=color, kde=True, bins=range(0, age_at_entry.max() + 2, 1), ax=ax1)
+    sns.histplot(age_at_entry, color=color, kde=True, bins=range(0, age_at_entry.max() + 1, 1), ax=ax1)
     ax1.set_title(f"Age Distribution at Entry into {intervention_name}")
     ax1.set_ylabel("Frequency")
     ax1.set_xlabel("Age")
