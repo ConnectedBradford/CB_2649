@@ -6,6 +6,7 @@ Contains function to recreate LAC LSOA analysis for CPP and CiNP interventions.
 
 """
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import folium
@@ -324,9 +325,6 @@ def prepare_intervention_data(intervention_data, boundary_data, imd_data, popula
     tuple
         (merged_data, children_population)
     """
-    import geopandas as gpd
-    import pandas as pd
-
     # Make a copy to avoid modifying the original
     intervention_data = intervention_data.copy()
 
@@ -410,9 +408,6 @@ def analyze_age_distribution(merged_data, children_population, intervention_name
     None
         Displays plots and prints statistics
     """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
     # Check if age_column exists
     if age_column not in merged_data.columns:
         raise ValueError(f"Column {age_column} not found in merged_data. Please calculate age first using calculate_age_at_entry().")
@@ -460,7 +455,7 @@ def analyze_age_distribution(merged_data, children_population, intervention_name
         # Format the subplot
         ax.set_ylabel('Percentage of Children (%)')
         ax.set_xlabel('Age')
-        ax.set_title(f'Age Distribution - {percentile_threshold}th Percentile Threshold', fontsize=14, pad=20)
+        ax.set_title(f'Age Distribution - {percentile_threshold}th Percentile Threshold - {intervention_name}', fontsize=14, pad=20)
         ax.set_xlim(-0.5, 17.5)
         ax.set_xticks(x)
         ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
@@ -474,11 +469,12 @@ def analyze_age_distribution(merged_data, children_population, intervention_name
         print("\n")
 
     # Add an overall title
-    fig.suptitle(f'Comparison of Age Distributions for {intervention_name} Using Different Percentile Thresholds',
+    fig.suptitle(f'Comparison of Age Distributions Using Different Percentile Thresholds - {intervention_name}',
                 fontsize=16, y=1.05)
 
     # Adjust layout
     plt.tight_layout()
+    plt.savefig(f'../figs/{intervention_name}_age_dist_high_other_groups.png', dpi=300)
     plt.show()
 
 
@@ -505,9 +501,6 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
     None
         Displays plots and prints statistics
     """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
     # Check if ethnicity_column exists
     if ethnicity_column not in merged_data.columns:
         raise ValueError(f"Column {ethnicity_column} not found in merged_data")
@@ -566,7 +559,7 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
         # Format the subplot
         ax.set_xlabel('Percentage of Children (%)')
         ax.set_ylabel('Ethnic Origin')
-        ax.set_title(f'Ethnic Origin Distribution - {percentile_threshold}th Percentile Threshold',
+        ax.set_title(f'Ethnic Origin Distribution - {percentile_threshold}th Percentile Threshold - {intervention_name}',
                     fontsize=14, pad=20)
         ax.set_yticks(y_pos)
         ax.set_yticklabels(sorted_categories)
@@ -582,12 +575,13 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
         print("\n")
 
     # Add an overall title
-    fig.suptitle(f'Comparison of Ethnic Origin Distributions for {intervention_name} Using Different Percentile Thresholds',
+    fig.suptitle(f'Comparison of Ethnic Origin Distributions Using Different Percentile Thresholds - {intervention_name}',
                 fontsize=16, y=1.02)
 
     # Adjust layout
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
+    plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_groups.png', dpi=300)
     plt.show()
 
 
@@ -609,9 +603,6 @@ def analyze_imd_domains(children_population, percentile_threshold=90, interventi
     None
         Displays plots
     """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
     # Calculate the intervention rate threshold for the specified percentile
     cutoff_value = np.percentile(children_population['children_per_total_pop'], percentile_threshold)
 
@@ -727,4 +718,5 @@ def analyze_imd_domains(children_population, percentile_threshold=90, interventi
     # Adjust layout
     plt.tight_layout()
     plt.subplots_adjust(top=0.9, bottom=0.1)
+    plt.savefig(f'../figs/{intervention_name}_IMDs_dist_high_other_groups_{percentile_threshold}th.png', dpi=300)
     plt.show()

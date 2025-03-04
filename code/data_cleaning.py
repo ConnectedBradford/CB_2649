@@ -70,8 +70,8 @@ def gender_mapping(df, gender_column):
     gender_mapping = {
         'F': 'Female',
         'M': 'Male',
-        '1': 'Female',
-        '2': 'Male',
+        '1': None,
+        '2': None,
         'Male': 'Male',
         'Female': 'Female',
         'U': None,

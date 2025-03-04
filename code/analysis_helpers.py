@@ -86,7 +86,7 @@ def add_calculated_columns(
     return df
 
 
-def plot_distributions(dataframe, color=color):
+def plot_distributions(dataframe, intervention_name, color=color):
     """
     Creates distribution plots for Gender, Ethnicity and PCArea.
 
@@ -95,11 +95,11 @@ def plot_distributions(dataframe, color=color):
     - color: str, optional, color for the plots (default is #702A7D)
     """
     # Gender Distribution
-    plt.figure(figsize=(6,6))
+    plt.figure(figsize=(5,4))
     ax = sns.countplot(data=dataframe, 
                        x='Gender',
                        color=color)
-    ax.set_title('Gender Distribution')
+    ax.set_title(f'{intervention_name} Gender Distribution')
     ax.set_xlabel('Gender')
 
     # Add counts to the bar
@@ -111,17 +111,35 @@ def plot_distributions(dataframe, color=color):
     
     # Ethnicity Distribution
     plt.figure(figsize=(8, 10))
-    ax = sns.countplot(
-        data=dataframe,
-        y="EthnicOrigin",
-        order=dataframe["EthnicOrigin"].value_counts().sort_values(ascending=False).index,
-        color=color
-    )
-    ax.set_title("Ethnicity Distribution")
-    ax.set_xlabel("Count")
-    for container in ax.containers:
-        ax.bar_label(container, fmt="%d")
+    
+    # Calculate percentages
+    ethnicity_counts = dataframe['EthnicOrigin'].value_counts(normalize=True) * 100
+    ethnicity_order = ethnicity_counts.sort_values(ascending=False).index[:12]
+    
+    # Filter to top 12 ethnicities
+    top_ethnicity_counts = ethnicity_counts[ethnicity_order]
+    
+    ax = sns.barplot(
+    x=top_ethnicity_counts.values,
+    y=ethnicity_order,
+    color=color)
+
+    ax.set_title(f'{intervention_name} Ethnicity Distribution - Top 12')
+    ax.set_xlabel('Percentage (%)', fontsize=12)
+    ax.set_ylabel(None)
+    
+    # Add percentage labels to the bars
+    for i, p in enumerate(ax.patches):
+        width = p.get_width()
+        ax.text(
+            width + 0.3,
+            p.get_y() + p.get_height()/2,
+            f'{width:.1f}%',  
+            ha='left',
+            va='center',
+            fontsize=10)
     plt.tight_layout()
+    plt.savefig(f'../figs/{intervention_name}_Ethinicity_Dist.png', dpi=300)
     plt.show()
 
     # PCArea Distribution
@@ -132,7 +150,7 @@ def plot_distributions(dataframe, color=color):
         order=dataframe["PCArea"].value_counts().sort_values(ascending=False).index,
         color=color
     )
-    ax.set_title("PCArea Distribution")
+    ax.set_title(f'{intervention_name} PCArea Distribution')
     ax.set_xlabel("Count")
     ax.tick_params(axis="x", rotation=45)
     for container in ax.containers:
@@ -144,42 +162,47 @@ def plot_distributions(dataframe, color=color):
 def plot_age_distribution(
     dataframe,
     intervention_name,
-    startdate='StartDate',
-    birth_date_column='DateOfBirth',
+    age_group_column='entry_agegroup',
     color=color,
-    grey_color=grey_color
+    show_percentages=True
 ):
     """
-    Plots age distribution for a given DataFrame with two subplots:
-    1. Continuous age distribution
-    2. Age group distribution
+    Plots age group distribution as percentages with labels on each bar.
 
     Parameters:
     - dataframe: pd.DataFrame
-    - intervention_name: str name of the analysis (e.g., CiC)
-    - startdate: str, name of the column containing entry dates
-    - birth_date_column: str, name of the column containing birth dates
-    - color, grey_color: str color hex codes
+    - intervention_name: str name of the analysis (e.g., CiC, CPP)
+    - age_group_column: str, name of the column containing age group categories
+    - color: str color hex code
+    - show_percentages: bool, whether to show percentage labels on bars
+    - save_fig: bool, whether to save the figure
+    - output_path: str, path to save the figure (if save_fig is True)
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    # Calculate percentages
+    age_counts = dataframe[age_group_column].value_counts(normalize=True).sort_index() * 100
 
-    # 1. Continuous age distribution
-    age_at_entry = (dataframe[startdate].dt.year - dataframe[birth_date_column].dt.year).astype(int)
-    sns.histplot(age_at_entry, color=color, kde=True, bins=range(0, age_at_entry.max() + 1, 1), ax=ax1)
-    ax1.set_title(f"Age Distribution at Entry into {intervention_name}")
-    ax1.set_ylabel("Frequency")
-    ax1.set_xlabel("Age")
+    # Create the plot
+    plt.figure(figsize=(6,4))
+    ax = sns.barplot(x=age_counts.index, y=age_counts.values, color=color)
 
-    # 2. Age group distribution
-    age_group_counts = dataframe['entry_agegroup'].value_counts()
-    sns.countplot(x='entry_agegroup', data=dataframe, ax=ax2, color=grey_color)
-    ax2.set_title(f"Age Group Distribution at Entry into {intervention_name}")
-    ax2.set_ylabel("Frequency")
-    ax2.set_xlabel("Age Group")
-    ax2.tick_params(axis='x', rotation=45)
+    # Add percentage labels on each bar if requested
+    if show_percentages:
+        for i, p in enumerate(ax.patches):
+            height = p.get_height()
+            ax.text(p.get_x() + p.get_width()/2.,
+                    height + 0.5,
+                    f'{height:.1f}%',
+                    ha="center", fontsize=10)
+
+    # Set titles and labels
+    plt.title(f'Age Group Distribution in {intervention_name}', fontsize=14, pad=20)
+    plt.xlabel('Entry Age Group', fontsize=12)
+    plt.ylabel('Percentage of Cases', fontsize=12)
+
+    # Adjust y-axis to make room for labels
+    plt.ylim(0, max(age_counts.values) * 1.15)
     plt.tight_layout()
     plt.show()
-
 
 def plot_monthly_trends(dataframe, intervention_name, date_column='StartDate', color=color, window=6):
     """
@@ -228,7 +251,7 @@ def plot_monthly_trends(dataframe, intervention_name, date_column='StartDate', c
     plt.show()
 
 
-def plot_monthly_entries_exits(dataframe, start_date_col, end_date_col, intervention_name, color=color):
+def plot_monthly_entries_exits(dataframe, start_date_col, end_date_col, intervention_name, color=color, exclude_last_month=True):
     """
     Plots monthly entries, exits, and net change for a given intervention type.
 
@@ -238,15 +261,33 @@ def plot_monthly_entries_exits(dataframe, start_date_col, end_date_col, interven
     - end_date_col: str
     - intervention_name: str
     - color: str
+    - exclude_last_month: bool, whether to exclude the last month from analysis
+    - save_fig: bool, whether to save the figure
+    - output_path: str, path to save the figure (if save_fig is True)
     """
+    # Count entry cases per month
     monthly_entries = dataframe[start_date_col].dt.to_period("M").value_counts().sort_index()
+
+    # Count exit cases per month
     monthly_exits = dataframe[end_date_col].dt.to_period("M").value_counts().sort_index()
 
+    # Exclude the last month if requested
+    if exclude_last_month and len(monthly_entries) > 0:
+        last_month = monthly_entries.index[-1]
+        monthly_entries = monthly_entries[monthly_entries.index != last_month]
+
+        # Also exclude from exits if it exists there
+        if last_month in monthly_exits.index:
+            monthly_exits = monthly_exits[monthly_exits.index != last_month]
+
+    # Create figure with two subplots
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 10), height_ratios=[2, 1])
 
     # Top subplot: Entries vs. Exits
     ax1.plot(monthly_entries.index.astype(str), monthly_entries.values, marker="o", color=color, label="Entries")
     ax1.plot(monthly_exits.index.astype(str), monthly_exits.values, marker="o", color="red", label="Exits")
+
+    # Adjust title based on whether last month is excluded
     ax1.set_title(f"Monthly Trend of {intervention_name} Entries & Exits\n"
                   f"({dataframe[start_date_col].min().date()} to {dataframe[start_date_col].max().date()})")
     ax1.set_ylabel("Number of Cases")
@@ -266,15 +307,19 @@ def plot_monthly_entries_exits(dataframe, start_date_col, end_date_col, interven
     for bar, value in zip(bars, difference.values):
         bar.set_color("red" if value < 0 else "green")
 
-    ax2.set_title("Net Change (Entries - Exits)")
+    ax2.set_title(f"Net Change (Entries - Exits)")
     ax2.set_xlabel("Month")
     ax2.set_ylabel("Net Change")
     ax2.tick_params(axis="x", rotation=45)
     ax2.grid(True, alpha=0.3)
-
     plt.tight_layout()
+
+    # Save figure
+    plt.savefig(f'../figs/{intervention_name}_monthly_entries_exits', dpi=300, bbox_inches='tight', facecolor='white')
     plt.show()
 
+    # Print summary statistics
+   
     print(f"\nSummary of Net Changes for {intervention_name}:")
     print(f"Average monthly net change: {difference.mean():.1f}")
     print(f"Maximum increase: {difference.max():.0f}")
@@ -454,39 +499,6 @@ def plot_median_duration_by_age(dataframe, intervention_name, color=color):
     plt.tight_layout()
     plt.savefig(f'../figs/{intervention_name}_median_duration_by_age.png',
                 dpi=300, bbox_inches='tight', facecolor='white')
-    plt.show()
-    
-def plot_age_groups_for_children_still_in_care(dataframe, intervention_name,
-                                               end_date_col,
-                                               age_group_col,
-                                               color=color):
-    """
-    Plots the distribution of the specified age group column for children who
-    are still in care (i.e., those with a missing end date).
-
-    Parameters
-    ----------
-    dataframe : pd.DataFrame
-        The input DataFrame containing the relevant columns.
-    end_date_col : str, optional
-        The column name indicating end date of intervention (default: "EndDate").
-    age_group_col : str, optional
-        The column name indicating the categorized age group (default: "entry_agegroup").
-    color : str, optional
-        Bar color for the histogram (default: "#702A7D").
-    intervention_name : str, optional
-        Name of the intervention, used for plot titles (default: "LAC").
-    """
-    still_in_care = dataframe.loc[dataframe[end_date_col].isnull()]
-
-    plt.figure(figsize=(7,5))
-    sns.histplot(data=still_in_care, x=age_group_col, color=color)
-    plt.title(f'Age Group Distribution for Children Still in {intervention_name}', fontsize=10)
-    plt.xlabel('Age Group')
-    plt.ylabel('Count')
-    plt.grid(False)
-    plt.tight_layout()
-    plt.savefig(f"../figs/{intervention_name}_agedist_still_in_care.png", dpi=300, bbox_inches='tight')
     plt.show()
     
 def plot_median_intervention_duration_over_time(dataframe, intervention_name, end_date_col,
