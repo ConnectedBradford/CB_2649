@@ -460,6 +460,7 @@ def analyze_age_distribution(merged_data, children_population, intervention_name
         ax.set_xticks(x)
         ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
         ax.legend(loc='upper right')
+        ax.set_ylim(-20, 20)
 
         # Print statistics
         print(f"{percentile_threshold}th percentile cutoff value: {cutoff_value:.4f}")
@@ -566,6 +567,7 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
         ax.axvline(x=0, color='black', linestyle='-', alpha=0.5)
         ax.grid(axis='x', linestyle='--', alpha=0.3)
         ax.legend(loc='upper right')
+        ax.set_ylim(-60,60)
 
         # Print statistics
         print(f"{percentile_threshold}th percentile cutoff value: {cutoff_value:.4f}")
@@ -699,8 +701,7 @@ def analyze_imd_domains(children_population, percentile_threshold=90, interventi
         ax.grid(axis='y', linestyle='--', alpha=0.3)
 
         # Set y-axis limits to be symmetric
-        y_max = max(high_pct.max(), other_pct.max()) * 1.1
-        ax.set_ylim(-y_max, y_max)
+        ax.set_ylim(-100,100)
 
         # Add legend only to the first subplot
         if i == 0:
