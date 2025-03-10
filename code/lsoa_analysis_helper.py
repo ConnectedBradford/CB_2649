@@ -123,15 +123,41 @@ def plot_intervention_map(
     base_output_path : str, default="../figs"
         Base path for saving the figure
     """
+    # Create a figure
     fig, ax = plt.subplots(figsize=figsize)
 
-    data.plot(
+    # Plot the data with fixes
+    plot = data.plot(
         ax=ax,
         column=rate_column,
         scheme='NaturalBreaks',
         cmap='YlOrRd',
-        legend=True
+        edgecolor='grey',
+        linewidth=0.1,  # Thinner edge lines
+        legend=False    # We'll create a custom colorbar instead
     )
+
+    # Get the min and max values for the colorbar
+    vmin = data[rate_column].min()
+    vmax = data[rate_column].max()
+
+    # Create a ScalarMappable for the colorbar
+    norm = plt.Normalize(vmin=vmin, vmax=vmax)
+    sm = plt.cm.ScalarMappable(cmap='YlOrRd', norm=norm)
+    sm.set_array([])
+
+    # Add a horizontal colorbar at the bottom
+    cbar = fig.colorbar(sm, ax=ax,
+                       orientation='horizontal',
+                       pad=0.0005,  # Space between map and colorbar
+                       shrink=0.6,
+                       aspect=25)   # Make the colorbar thinner
+
+    # Customize the colorbar ticks
+    ticks = np.linspace(vmin, vmax, 6)  # 6 ticks including min and max
+    cbar.set_ticks(ticks)
+    cbar.set_ticklabels([f"{tick:.2f}%" for tick in ticks])
+    cbar.ax.tick_params(size=8, width=1.5, direction='out', color='black')
 
     ax.set_axis_off()
     ax.set_title(f'Rate of {intervention_name} per LSOA Population')
@@ -202,6 +228,13 @@ def plot_cumulative_distribution(
         color=color
     )
 
+    # Add annotation for the 50% reference point
+    plt.annotate(f'{percent_lsoas_for_50:.1f}% of LSOAs account for 50% of {intervention_name}',
+                 xy=(percent_lsoas_for_50, 50),
+                 xytext=(percent_lsoas_for_50 + 5, 40),
+                 arrowprops=dict(facecolor='black', shrink=0.05, width=1.5),
+                 fontsize=10)
+
     plt.title(f'Cumulative Proportion of {intervention_name} Cases by LSOA')
     plt.xlabel('Percentage of LSOAs (%)')
     plt.ylabel(f'Cumulative Proportion of {intervention_name} Cases (%)')
@@ -209,10 +242,7 @@ def plot_cumulative_distribution(
 
     output_path = f"{base_output_path}/{intervention_name.lower()}_cumulative_distribution.png"
     plt.savefig(output_path, dpi=300)
-    plt.show()
-
-    return f"{percent_lsoas_for_50:.1f}% of LSOAs account for 50% of {intervention_name} cases"
-  
+    plt.show()  
 
 
 def analyze_imd_relationship(
@@ -250,7 +280,8 @@ def analyze_imd_relationship(
     sns.scatterplot(
         data=data,
         x=imd_column,
-        y=rate_column
+        y=rate_column,
+        color=color
     )
 
     # Add regression line
@@ -550,7 +581,7 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
 
         # Create horizontal bars
         y_pos = np.arange(len(sorted_categories))
-        width = 0.8  # Bar width
+        width = 1.0  # Bar width
 
         ax.barh(y_pos, high_ethnicity_pct, height=width, color='red', alpha=0.7,
                edgecolor='black', linewidth=1.0, label=f'>= {percentile_threshold}th Percentile')
@@ -565,20 +596,14 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
         ax.set_yticks(y_pos)
         ax.set_yticklabels(sorted_categories)
         ax.axvline(x=0, color='black', linestyle='-', alpha=0.5)
-        ax.grid(axis='x', linestyle='--', alpha=0.3)
+        ax.grid(axis='y', linestyle='--', alpha=0.3)
         ax.legend(loc='upper right')
-        ax.set_ylim(-60,60)
-
-        # Print statistics
-        print(f"{percentile_threshold}th percentile cutoff value: {cutoff_value:.4f}")
-        print(f"Number of LSOAs above {percentile_threshold}th percentile: {len(high_intervention_lsoas)}")
-        print(f"Number of children in high group ({percentile_threshold}th): {len(high_group)}")
-        print(f"Number of children in other group ({percentile_threshold}th): {len(other_group)}")
-        print("\n")
-
+        max_value = max(high_ethnicity_pct.max(), other_ethnicity_pct.max())
+        ax.set_xlim(-max_value * 1.1, max_value * 1.1)  # Add 10% margin
+        
     # Add an overall title
     fig.suptitle(f'Comparison of Ethnic Origin Distributions Using Different Percentile Thresholds - {intervention_name}',
-                fontsize=16, y=1.02)
+                fontsize=14, y=1.02)
 
     # Adjust layout
     plt.tight_layout()
@@ -586,6 +611,113 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
     plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_groups.png', dpi=300)
     plt.show()
 
+
+def analyze_grouped_ethnicity_distribution(merged_data, children_population, intervention_name='Intervention',
+                                 percentile_thresholds=[90, 80], ethnicity_column='EthnicOrigin',
+                                 top_n_categories=2):
+    """
+    Analyze and visualize grouped ethnic origin distribution for high-intervention vs other LSOAs.
+    Keeps top N categories and groups the rest as 'Others'.
+
+    Parameters:
+    -----------
+    merged_data : pandas.DataFrame
+        DataFrame containing merged intervention and demographic data
+    children_population : pandas.DataFrame
+        DataFrame containing population data with intervention rates
+    intervention_name : str, default='Intervention'
+        Name of the intervention for labeling
+    percentile_thresholds : list, default=[90, 80]
+        Percentile thresholds to use for comparison
+    ethnicity_column : str, default='EthnicOrigin'
+        Name of the column containing ethnicity data
+    top_n_categories : int, default=2
+        Number of top categories to keep separate, rest will be grouped as 'Others'
+
+    Returns:
+    --------
+    None
+        Displays plots and prints statistics
+    """
+    # Check if ethnicity_column exists
+    if ethnicity_column not in merged_data.columns:
+        raise ValueError(f"Column {ethnicity_column} not found in merged_data")
+
+    # Get the counts for the entire dataset to determine top categories
+    ethnicity_counts = merged_data[ethnicity_column].value_counts()
+    top_categories = ethnicity_counts.nlargest(top_n_categories).index.tolist()
+
+    # Create a mapping function
+    def map_ethnicity(x):
+        return x if x in top_categories else 'Others'
+
+    # Create a figure with two subplots side by side to compare percentile thresholds
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    # Process each percentile threshold
+    for i, percentile_threshold in enumerate(percentile_thresholds[:2]):  # Limit to first two thresholds
+        ax = axes[i]
+
+        # Calculate cutoff value
+        cutoff_value = np.percentile(children_population['children_per_total_pop'], percentile_threshold)
+
+        # Select LSOAs above the percentile threshold
+        high_intervention_lsoas = children_population[
+            children_population['children_per_total_pop'] >= cutoff_value
+        ]['lsoa21cd'].tolist()
+
+        # Split the data into high rate and other groups
+        high_group = merged_data[merged_data['lsoa21cd'].isin(high_intervention_lsoas)].copy()
+        other_group = merged_data[~merged_data['lsoa21cd'].isin(high_intervention_lsoas)].copy()
+
+        # Apply grouping to each dataset
+        high_group['ethnicity_grouped'] = high_group[ethnicity_column].apply(map_ethnicity)
+        other_group['ethnicity_grouped'] = other_group[ethnicity_column].apply(map_ethnicity)
+
+        # Get the counts for each grouped ethnic origin category
+        high_ethnicity_counts = high_group['ethnicity_grouped'].value_counts()
+        other_ethnicity_counts = other_group['ethnicity_grouped'].value_counts()
+
+        # Convert to percentages
+        high_ethnicity_pct = high_ethnicity_counts / high_ethnicity_counts.sum() * 100 if high_ethnicity_counts.sum() > 0 else high_ethnicity_counts * 0
+        other_ethnicity_pct = other_ethnicity_counts / other_ethnicity_counts.sum() * 100 if other_ethnicity_counts.sum() > 0 else other_ethnicity_counts * 0
+
+        # Combine the categories to ensure both groups have the same categories
+        all_categories = sorted(set(high_ethnicity_pct.index) | set(other_ethnicity_pct.index))
+
+        # Reindex to include all categories, filling missing values with 0
+        high_ethnicity_pct = high_ethnicity_pct.reindex(all_categories, fill_value=0)
+        other_ethnicity_pct = other_ethnicity_pct.reindex(all_categories, fill_value=0)
+
+        # Create vertical bars
+        x_pos = np.arange(len(all_categories))
+        width = 1.0  # Bar width
+
+        ax.bar(x_pos, high_ethnicity_pct, width=width, color='red', alpha=0.7,
+               edgecolor='black', linewidth=0.5, label=f'>= {percentile_threshold}th Percentile')
+        ax.bar(x_pos, -other_ethnicity_pct, width=width, color='blue', alpha=0.7,
+               edgecolor='black', linewidth=0.5, label=f'< {percentile_threshold}th Percentile')
+
+        # Format the subplot
+        ax.set_ylabel('Percentage of Children (%)')
+        ax.set_xlabel('Ethnic Origin')
+        ax.set_title(f'Ethnic Origin Distribution - {percentile_threshold}th Percentile Threshold - {intervention_name}',
+                    fontsize=14, pad=20)
+        ax.set_xticks(x_pos)
+        ax.set_xticklabels(all_categories, ha='right')
+        ax.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+        ax.grid(axis='x', linestyle='--', alpha=0.3)
+        ax.legend(loc='upper right')
+        max_value = max(high_ethnicity_pct.max(), other_ethnicity_pct.max())
+        ax.set_ylim(-60, 60)  # Add 10% margin
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.9)
+    plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_grouped.png', dpi=300)
+    plt.show()
+    
+    
 
 def analyze_imd_domains(children_population, percentile_threshold=90, intervention_name='Intervention'):
     """
@@ -720,4 +852,177 @@ def analyze_imd_domains(children_population, percentile_threshold=90, interventi
     plt.tight_layout()
     plt.subplots_adjust(top=0.9, bottom=0.1)
     plt.savefig(f'../figs/{intervention_name}_IMDs_dist_high_other_groups_{percentile_threshold}th.png', dpi=300)
+    plt.show()
+    
+    
+    
+def analyze_assessment_categories(
+    assessment_data,
+    children_population,
+    intervention_name='Intervention',
+    percentile_threshold=80,
+    category_column='all_categories',
+    lsoa_column='LSOA',
+    figsize=(14, 10),
+    base_output_path="../figs"
+):
+    """
+    Analyze and visualize assessment categories between high-intervention and other areas.
+    
+    Parameters:
+    -----------
+    assessment_data : pd.DataFrame
+        DataFrame containing assessment data with LSOA codes and categories
+    children_population : pd.DataFrame
+        DataFrame containing population data with intervention rates
+    intervention_name : str, default='Intervention'
+        Name of the intervention for labeling
+    percentile_threshold : int, default=80
+        Percentile threshold to use for comparison
+    category_column : str, default='all_categories'
+        Column name containing the assessment categories (comma-separated)
+    lsoa_column : str, default='LSOA'
+        Column name containing LSOA codes in assessment_data
+    figsize : tuple, default=(14, 10)
+        Figure size in inches
+    base_output_path : str, default="../figs"
+        Base path for saving the figure
+        
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame containing the comparison data
+    """
+    # Filter assessment data to include only valid LSOAs
+    assessment_with_lsoa = assessment_data.loc[
+        (assessment_data[lsoa_column] != "") & 
+        assessment_data[lsoa_column].notnull()
+    ].copy()
+    
+    # Clean the categories for consistency
+    assessment_with_lsoa[category_column] = (
+        assessment_with_lsoa[category_column]
+        .str.strip()
+        .str.lower()
+        .str.replace(r'\s*,\s*', ',', regex=True)
+    )
+    
+    # Split and create dummy variables
+    category_dummies = assessment_with_lsoa[category_column].str.get_dummies(sep=',')
+    
+    # Combine the original dataframe with the dummy variables
+    assessment_wide = pd.concat(
+        [assessment_with_lsoa[['person_id', 'gender', lsoa_column]], category_dummies], 
+        axis=1
+    )
+    
+    # Calculate cutoff value for high intervention areas
+    cutoff_value = np.percentile(
+        children_population['children_per_total_pop'], 
+        percentile_threshold
+    )
+    
+    # Select LSOAs above the percentile threshold
+    high_intervention_lsoas = children_population[
+        children_population['children_per_total_pop'] >= cutoff_value
+    ]['lsoa21cd'].tolist()
+    
+    # Split the data into high intervention and other groups
+    high_intervention_df = assessment_wide[
+        assessment_wide[lsoa_column].isin(high_intervention_lsoas)
+    ]
+    other_intervention_df = assessment_wide[
+        ~assessment_wide[lsoa_column].isin(high_intervention_lsoas)
+    ]
+    
+    # Get category columns (all columns except person_id, gender, and LSOA)
+    category_columns = assessment_wide.columns[3:]
+    
+    # Calculate percentages for each category in each group
+    high_total_cases = len(high_intervention_df)
+    other_total_cases = len(other_intervention_df)
+    
+    # Handle potential division by zero
+    high_percentages = (
+        high_intervention_df[category_columns].sum() / high_total_cases * 100
+        if high_total_cases > 0 else pd.Series(0, index=category_columns)
+    )
+    other_percentages = (
+        other_intervention_df[category_columns].sum() / other_total_cases * 100
+        if other_total_cases > 0 else pd.Series(0, index=category_columns)
+    )
+    
+    # Prepare data for plotting
+    comparison_df = pd.DataFrame({
+        'High Intervention Areas (%)': high_percentages,
+        'Other Areas (%)': other_percentages
+    })
+    
+    # Calculate absolute difference and sort
+    comparison_df['Difference'] = abs(
+        comparison_df['High Intervention Areas (%)'] - 
+        comparison_df['Other Areas (%)']
+    )
+    comparison_df = comparison_df.sort_values(by='Difference', ascending=False)
+    
+    # Take top 20 categories with highest difference if there are more than 20
+    if len(comparison_df) > 20:
+        comparison_df = comparison_df.head(20)
+    
+    # Sort for visualization (ascending for horizontal bar chart)
+    comparison_df = comparison_df.sort_values(by='Difference')
+    
+    # Prepare data for grouped bar chart
+    categories_sorted = comparison_df.index
+    x = np.arange(len(categories_sorted))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    # Create bars
+    bars1 = ax.barh(
+        x - width/2, 
+        comparison_df['High Intervention Areas (%)'], 
+        width, 
+        label=f'>= {percentile_threshold}th Percentile', 
+        color='#E74C3C'
+    )
+    bars2 = ax.barh(
+        x + width/2, 
+        comparison_df['Other Areas (%)'], 
+        width, 
+        label=f'< {percentile_threshold}th Percentile', 
+        color='#3498DB'
+    )
+    
+    # Add labels and title
+    ax.set_xlabel('Percentage of Cases (%)')
+    ax.set_title(
+        f'Comparison of Assessment Categories Between High Intervention and Other Areas for {intervention_name}', 
+        pad=20
+    )
+    ax.set_yticks(x)
+    ax.set_yticklabels(categories_sorted)
+    ax.legend(loc='lower right')
+    
+    # Add percentage labels on bars
+    for i, bars in enumerate([bars1, bars2]):
+        for bar in bars:
+            width = bar.get_width()
+            label_x_pos = width if width > 5 else width + 1
+            ax.text(
+                label_x_pos, 
+                bar.get_y() + bar.get_height()/2, 
+                f'{width:.1f}%', 
+                va='center', 
+                color='black' if width > 5 else 'black',
+                fontweight='normal', 
+                fontsize=9
+            )
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.05)
+    
+    # Save the figure
+    output_path = f"{base_output_path}/{intervention_name.lower()}_assessment_in_groups.png"
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.show()

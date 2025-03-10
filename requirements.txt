@@ -1,4 +1,3 @@
-folium
 contextily
 geopandas
 mapclassify
