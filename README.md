@@ -1,21 +1,23 @@
-# CB_2649 - LAC II 2024/2025
+<h1 align="center">CB_2649 - LAC II 2024/2025</h1>
+<hr style="height:3px;border-width:0;color:gray;background-color:gray">
 
 ## Table of Contents
-1. [Overview](##overview)
-2. [Project Structure](#project-structure)
-3. [Data Sources](#data-sources)
-4. [Reproduction Steps](#reproduction-steps)
-      - [Environment Setup](#environment-setup)
-      - [Running the Analysis](#running-the-analysis)
-    - [Demographic Analysis](#demographic-analysis)
-    - [LSOA-Level Analysis](#lsoa-level-analysis)
-    - [Comprehensive Assessment](#comprehensive-assessment)
-5. [Key Modules](#key-modules)
-6. [Results](#results)
-7. [License](#license)
-
+---
+- [Overview](#Overview)
+- [Project Structure](#Project-Structure)
+- [Data Sources](#Data-Sources)
+- [Reproduction Steps](#Reproduction-Steps)
+      - [Environment Setup](#Environment-Setup)
+      - [Running the Analysis](#Running-the-Analysis)
+    - [Demographic Analysis](#Demographic-Analysis)
+    - [LSOA-Level Analysis](#LSOA-Level-Analysis)
+    - [Comprehensive Assessment](#Comprehensive-Assessment)
+- [Key Modules](#Key-Modules)
+- [Results](#Results)
+- [License](License)
+---
 ## Overview
-This project analyzes three interventions:
+This project analyzes three social care interventions in Bradford:
 - Child Protection Plans (CPP)
 - Looked After Children (LAC)
 - Children in Need Plans (CINP)
@@ -45,15 +47,20 @@ The analysis examines both demographic patterns and geographical distribution at
 1. Clone this repository and navigate to the project folder:
 
 ```bash
-git clone [repository-url]
-cd [project-folder-name]
+git clone https://github.com/ConnectedBradford/CB_2649
+cd CB_2649
 ```
 
 2. Create and activate a virtual environment:
 
 ```bash
+# For Windows
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venve\Scripts\activate
+
+# For Mac/Linux
+python -m venv venv
+source venv/bin/activate
 ```
 
 3. Install dependencies:
@@ -102,5 +109,5 @@ jupyter notebook notebooks/assessment_analysis.ipynb
 ## Results
 Visualizations are stored in `figs/`.
 
-## License
+## 7. License
 See the LICENSE file for details.
