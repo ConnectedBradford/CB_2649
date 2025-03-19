@@ -46,7 +46,7 @@ The analysis examines both demographic patterns and geographical distribution at
 ## Workflow Diagram
 This diagram provides an overview of the analysis workflow:
 
-![Activity Diagram](figs/activity_diagram.png "Project Workflow Diagram")
+![Activity Diagram](activity_diagram.png "Project Workflow Diagram")
 
 ## Reproduction Steps
 
@@ -114,7 +114,7 @@ jupyter notebook notebooks/assessment_analysis.ipynb
 - `lsoa_analysis_helper.py`: Geospatial analysis functions for LSOA-level analysis
 
 ## Results
-Visualizations are stored in `figs/`.
+Visualizations are stored in `figs/` folder.
 
 ## 7. License
 See the LICENSE file for details.
