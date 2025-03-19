@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import folium
 import geopandas as gpd
 from scipy import stats
 from dateutil.relativedelta import relativedelta
