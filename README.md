@@ -8,6 +8,7 @@
 - [Overview](#Overview)
 - [Project Structure](#Project-Structure)
 - [Data Sources](#Data-Sources)
+- [Workflow Diagram](#Workflow-Diagram)
 - [Reproduction Steps](#Reproduction-Steps)
       - [Environment Setup](#Environment-Setup)
       - [Running the Analysis](#Running-the-Analysis)
@@ -46,7 +47,7 @@ The analysis examines both demographic patterns and geographical distribution at
 ## Workflow Diagram
 This diagram provides an overview of the analysis workflow:
 
-![Activity Diagram](activity_diagram.png "Project Workflow Diagram")
+![Activity Diagram](docs/activity_diagram.png "Project Workflow Diagram")
 
 ## Reproduction Steps
 
@@ -94,7 +95,7 @@ The demographic analysis workflow:
 The LSOA analysis workflow:
 1. Run the initial LAC analysis:
    ```bash
-   `jupyter notebook notebooks/lac_lsoa_analysis.ipynb`
+   jupyter notebook notebooks/lac_lsoa_analysis.ipynb
    ```
 2. The CPP and CINP LSOA analyses reuse modules from the LAC analysis:
    ```bash
