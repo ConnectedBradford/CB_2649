@@ -124,7 +124,7 @@ def plot_distributions(dataframe, intervention_name, color=color):
     y=ethnicity_order,
     color=color)
 
-    ax.set_title(f'Top 12 Ethnicity Distribution in {intervention_name})
+    ax.set_title(f'Top 12 Ethnicity Distribution in {intervention_name}')
     ax.set_xlabel('Percentage (%)', fontsize=12)
     ax.set_ylabel(None)
     

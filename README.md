@@ -1,6 +1,8 @@
 <h1 align="center">CB_2649 - LAC II 2024/2025</h1>
 <hr style="height:3px;border-width:0;color:gray;background-color:gray">
 
+
+
 ## Table of Contents
 ---
 - [Overview](#Overview)
@@ -40,6 +42,11 @@ The analysis examines both demographic patterns and geographical distribution at
 - English Index of Multiple Deprivation (IMD) 2019 - [LINK](https://data.cdrc.ac.uk/dataset/index-multiple-deprivation-imd)
 - Bradford children population data (0-17, 2021) - [LINK](https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/lowersuperoutputareamidyearpopulationestimates)
 - Children's social care data (CPP, LAC, CINP) - Connected Bradford
+
+## Workflow Diagram
+This diagram provides an overview of the analysis workflow:
+
+![Activity Diagram](figs/activity_diagram.png "Project Workflow Diagram")
 
 ## Reproduction Steps
 
