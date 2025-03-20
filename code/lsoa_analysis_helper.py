@@ -36,7 +36,7 @@ def calculate_intervention_rates(
     population_data : pd.DataFrame
         DataFrame containing population data
     intervention_name : str
-        Name of the intervention (e.g., 'LAC', 'CPP', 'CIN')
+        Name of the intervention (e.g., 'LAC', 'CPP', 'CINP')
     intervention_col : str, default='LSOA'
         Column name containing LSOA codes in intervention_data
 
@@ -65,7 +65,7 @@ def calculate_intervention_rates(
 
     # Calculate counts per LSOA
     cases_per_lsoa = merged_data.groupby('lsoa21cd', as_index=False).agg(
-        case_count=('lsoa21cd', 'size'),
+        children_count=('lsoa21cd', 'size'),
         geometry=('geometry', 'first')
     ).pipe(gpd.GeoDataFrame)
 
@@ -92,17 +92,17 @@ def calculate_intervention_rates(
         how='left'
     ).drop(columns='LSOA 2021 Code')
 
-    final_data['rate_per_population'] = (
-        final_data['case_count'] /
+    final_data['intervention_children_per_1000_children'] = (
+        final_data['children_count'] /
         final_data['TotalPop']
-    ) * 100
+    ) * 1000
 
     return final_data
 
 def plot_intervention_map(
     data,
     intervention_name,
-    rate_column='rate_per_population',
+    rate_column='intervention_children_per_1000_children',
     figsize=(8, 8),
     base_output_path="../figs"
 ):
@@ -115,7 +115,7 @@ def plot_intervention_map(
         GeoDataFrame containing intervention rates and geometry
     intervention_name : str
         Name of the intervention (e.g., 'LAC', 'CPP', 'CIN')
-    rate_column : str, default='rate_per_population'
+    rate_column : str, default='intervention_children_per_1000_children'
         Column name containing the rates to plot
     figsize : tuple, default=(8, 8)
         Figure size in inches
@@ -155,22 +155,23 @@ def plot_intervention_map(
     # Customize the colorbar ticks
     ticks = np.linspace(vmin, vmax, 6)  # 6 ticks including min and max
     cbar.set_ticks(ticks)
-    cbar.set_ticklabels([f"{tick:.2f}%" for tick in ticks])
+    cbar.set_ticklabels([f"{tick:.2f}" for tick in ticks])
     cbar.ax.tick_params(size=8, width=1.5, direction='out', color='black')
 
     ax.set_axis_off()
-    ax.set_title(f'Rate of {intervention_name} per LSOA Population')
+    ax.set_title(f'Number of {intervention_name} per 1000 Children')
     plt.tight_layout()
 
     output_path = f"{base_output_path}/{intervention_name.lower()}_rate_map.png"
     plt.savefig(output_path, dpi=300)
     plt.show()
   
+
   
 def plot_cumulative_distribution(
     data,
     intervention_name,
-    count_column='case_count',
+    count_column='children_count',
     color=color,
     figsize=(10, 6),
     base_output_path="../figs"
@@ -184,7 +185,7 @@ def plot_cumulative_distribution(
         DataFrame containing intervention counts per LSOA
     intervention_name : str
         Name of the intervention (e.g., 'LAC', 'CPP', 'CINP')
-    count_column : str, default='case_count'
+    count_column : str, default='children_count'
         Column name containing the case counts
     color : str, default='blue'
         Color for the plot line
@@ -247,7 +248,7 @@ def plot_cumulative_distribution(
 def analyze_imd_relationship(
     data,
     intervention_name,
-    rate_column='rate_per_population',
+    rate_column='intervention_children_per_1000_children',
     imd_column='IMD_Decile',
     base_output_path="../figs"
 ):
@@ -260,7 +261,7 @@ def analyze_imd_relationship(
         DataFrame containing intervention rates and IMD data
     intervention_name : str
         Name of the intervention (e.g., 'LAC', 'CPP', 'CIN')
-    rate_column : str, default='rate_per_population'
+    rate_column : str, default='intervention_children_per_1000_children'
         Column name containing the intervention rates
     imd_column : str, default='IMD_Decile'
         Column name containing the IMD decile values
