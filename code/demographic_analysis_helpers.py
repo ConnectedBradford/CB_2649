@@ -1,5 +1,5 @@
 """
-analysis_helpers.py
+demographic_analysis_helpers.py
 
 Contains utility functions for analyzing re-entries in person data,
 generating additional calculated columns, and plotting.
@@ -197,11 +197,12 @@ def plot_age_distribution(
     # Set titles and labels
     plt.title(f'Age Group Distribution in {intervention_name}', fontsize=14, pad=20)
     plt.xlabel('Entry Age Group', fontsize=12)
-    plt.ylabel('Percentage of Cases', fontsize=12)
+    plt.ylabel('Percentage', fontsize=12)
 
     # Adjust y-axis to make room for labels
     plt.ylim(0, max(age_counts.values) * 1.15)
     plt.tight_layout()
+    plt.savefig(f'../figs/{intervention_name.lower()}_entryagegroup_dist.png', dpi=300)
     plt.show()
 
 def plot_monthly_trends(dataframe, intervention_name, date_column='StartDate', color=color, window=6):
