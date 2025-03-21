@@ -157,6 +157,32 @@ def plot_distributions(dataframe, intervention_name, color=color):
         ax.bar_label(container, fmt="%d")
     plt.tight_layout()
     plt.show()
+    
+    
+def individual_age_distribution(dataframe, intervention_name):
+    """
+    Plots individual age distribution for ages 18 and below.
+
+    Parameters:
+    - dataframe: pd.DataFrame
+    - intervention_name: str name of the analysis (e.g., CiC, CPP)
+    """
+    # Filter to only include ages 18 and below
+    filtered_df = dataframe[dataframe['AgeAtEntry'] <= 18]
+
+    # Set max age
+    max_plot_age = filtered_df['AgeAtEntry'].max()
+
+    # plot the age distribution
+    plt.figure(figsize=(8,6))
+    sns.histplot(data=filtered_df, x='AgeAtEntry', color=color, kde=True, bins=range(0, max_plot_age + 1))
+    plt.title(f'Individual Age Distribution at the Time of Entry into {intervention_name}')
+    plt.ylabel('Frequency')
+    plt.xlabel('Age')
+    plt.xticks(np.arange(0, max_plot_age, step=1))
+    plt.xlim(0, max_plot_age)
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_age_distribution(
@@ -499,7 +525,7 @@ def plot_median_duration_by_age(dataframe, intervention_name, color=color):
 
     plt.tight_layout()
     # plt.savefig(f'../figs/{intervention_name}_median_duration_by_age.png',
-                dpi=300, bbox_inches='tight', facecolor='white')
+    #             dpi=300, bbox_inches='tight', facecolor='white')
     plt.show()
     
 def plot_median_intervention_duration_over_time(dataframe, intervention_name, end_date_col,
