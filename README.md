@@ -16,7 +16,6 @@
     - [LSOA-Level Analysis](#LSOA-Level-Analysis)
     - [Comprehensive Assessment](#Comprehensive-Assessment)
 - [Key Modules](#Key-Modules)
-- [Results](#Results)
 - [License](License)
 ---
 ## Overview
@@ -114,8 +113,6 @@ jupyter notebook notebooks/assessment_analysis.ipynb
 - `analysis_helpers.py`: Analysis functions for demographic analysis
 - `lsoa_analysis_helper.py`: Geospatial analysis functions for LSOA-level analysis
 
-## Results
-Visualizations are stored in `figs/` folder.
 
 ## 7. License
 See the LICENSE file for details.

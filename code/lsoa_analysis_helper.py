@@ -163,7 +163,7 @@ def plot_intervention_map(
     plt.tight_layout()
 
     output_path = f"{base_output_path}/{intervention_name.lower()}_rate_map.png"
-    plt.savefig(output_path, dpi=300)
+    # plt.savefig(output_path, dpi=300)
     plt.show()
   
 
@@ -241,7 +241,7 @@ def plot_cumulative_distribution(
     plt.grid(True, linestyle='--', alpha=.4)
 
     output_path = f"{base_output_path}/{intervention_name.lower()}_cumulative_distribution.png"
-    plt.savefig(output_path, dpi=300)
+    # plt.savefig(output_path, dpi=300)
     plt.show()  
 
 
@@ -299,7 +299,7 @@ def analyze_imd_relationship(
 
     # Save plot
     output_path = f"{base_output_path}/{intervention_name.lower()}_rate_vs_imd_decile.png"
-    plt.savefig(output_path, dpi=300)
+    # plt.savefig(output_path, dpi=300)
     plt.show()
 
     # Statistical Analysis
@@ -506,7 +506,7 @@ def analyze_age_distribution(merged_data, children_population, intervention_name
 
     # Adjust layout
     plt.tight_layout()
-    plt.savefig(f'../figs/{intervention_name}_age_dist_high_other_groups.png', dpi=300)
+    # plt.savefig(f'../figs/{intervention_name}_age_dist_high_other_groups.png', dpi=300)
     plt.show()
 
 
@@ -608,7 +608,7 @@ def analyze_ethnicity_distribution(merged_data, children_population, interventio
     # Adjust layout
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
-    plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_groups.png', dpi=300)
+    # plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_groups.png', dpi=300)
     plt.show()
 
 
@@ -714,7 +714,7 @@ def analyze_grouped_ethnicity_distribution(merged_data, children_population, int
     # Adjust layout
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
-    plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_grouped.png', dpi=300)
+    # plt.savefig(f'../figs/{intervention_name}_ethnicity_dist_high_other_grouped.png', dpi=300)
     plt.show()
     
     
@@ -851,7 +851,7 @@ def analyze_imd_domains(children_population, percentile_threshold=90, interventi
     # Adjust layout
     plt.tight_layout()
     plt.subplots_adjust(top=0.9, bottom=0.1)
-    plt.savefig(f'../figs/{intervention_name}_IMDs_dist_high_other_groups_{percentile_threshold}th.png', dpi=300)
+    # plt.savefig(f'../figs/{intervention_name}_IMDs_dist_high_other_groups_{percentile_threshold}th.png', dpi=300)
     plt.show()
     
     
@@ -1024,5 +1024,5 @@ def analyze_assessment_categories(
     
     # Save the figure
     output_path = f"{base_output_path}/{intervention_name.lower()}_assessment_in_groups.png"
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    # plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.show()

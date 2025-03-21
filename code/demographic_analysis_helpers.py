@@ -139,7 +139,7 @@ def plot_distributions(dataframe, intervention_name, color=color):
             va='center',
             fontsize=10)
     plt.tight_layout()
-    plt.savefig(f'../figs/{intervention_name}_Ethinicity_Dist.png', dpi=300)
+    # plt.savefig(f'../figs/{intervention_name}_Ethinicity_Dist.png', dpi=300)
     plt.show()
 
     # PCArea Distribution
@@ -202,7 +202,7 @@ def plot_age_distribution(
     # Adjust y-axis to make room for labels
     plt.ylim(0, max(age_counts.values) * 1.15)
     plt.tight_layout()
-    plt.savefig(f'../figs/{intervention_name.lower()}_entryagegroup_dist.png', dpi=300)
+    # plt.savefig(f'../figs/{intervention_name.lower()}_entryagegroup_dist.png', dpi=300)
     plt.show()
 
 def plot_monthly_trends(dataframe, intervention_name, date_column='StartDate', color=color, window=6):
@@ -316,7 +316,7 @@ def plot_monthly_entries_exits(dataframe, start_date_col, end_date_col, interven
     plt.tight_layout()
 
     # Save figure
-    plt.savefig(f'../figs/{intervention_name}_monthly_entries_exits', dpi=300, bbox_inches='tight', facecolor='white')
+    # plt.savefig(f'../figs/{intervention_name}_monthly_entries_exits', dpi=300, bbox_inches='tight', facecolor='white')
     plt.show()
 
     # Print summary statistics
@@ -498,7 +498,7 @@ def plot_median_duration_by_age(dataframe, intervention_name, color=color):
                 ha='center', va='bottom')
 
     plt.tight_layout()
-    plt.savefig(f'../figs/{intervention_name}_median_duration_by_age.png',
+    # plt.savefig(f'../figs/{intervention_name}_median_duration_by_age.png',
                 dpi=300, bbox_inches='tight', facecolor='white')
     plt.show()
     
@@ -538,6 +538,6 @@ def plot_median_intervention_duration_over_time(dataframe, intervention_name, en
     plt.ylabel('Median Duration (days)')
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig(f"../figs/{intervention_name}_median_duration_over_time.png", dpi=300, bbox_inches='tight')
+    # plt.savefig(f"../figs/{intervention_name}_median_duration_over_time.png", dpi=300, bbox_inches='tight')
     plt.show()
     
