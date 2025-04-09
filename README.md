@@ -63,7 +63,7 @@ cd CB_2649
 ```bash
 # For Windows
 python -m venv venv
-venve\Scripts\activate
+venv\Scripts\activate
 
 # For Mac/Linux
 python -m venv venv
